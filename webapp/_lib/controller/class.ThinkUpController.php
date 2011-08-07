@@ -51,11 +51,6 @@ abstract class ThinkUpController {
     protected $profiler_enabled = false;
     /**
      *
-     * @var float
-     */
-    private $start_time = 0;
-    /**
-     *
      * @var araray
      */
     protected $header_scripts = array ();
@@ -92,8 +87,8 @@ abstract class ThinkUpController {
         try {
             $config = Config::getInstance();
             $this->profiler_enabled = Profiler::isEnabled();
-            if ( $this->profiler_enabled) {
-                $this->start_time = microtime(true);
+            if ($this->profiler_enabled) {
+                Profiler::getInstance()->begin();
             }
             $this->view_mgr = new SmartyThinkUp();
             if ($this->isLoggedIn()) {
@@ -196,34 +191,9 @@ abstract class ThinkUpController {
         $this->sendHeader();
         if (isset($this->view_template)) {
             if ($this->view_mgr->isViewCached()) {
-                $cache_key = $this->getCacheKeyString();
-                if ($this->profiler_enabled && !isset($this->json_data) &&
-                strpos($this->content_type, 'text/javascript') === false) {
-                    $view_start_time = microtime(true);
-                    $cache_source = $this->shouldRefreshCache()?"DATABASE":"FILE";
-                    $results = $this->view_mgr->fetch($this->view_template, $cache_key);
-                    $view_end_time = microtime(true);
-                    $total_time = $view_end_time - $view_start_time;
-                    $profiler = Profiler::getInstance();
-                    $profiler->add($total_time, "Rendered view from ". $cache_source . ", cache key: <i>".
-                    $this->getCacheKeyString(), false).'</i>';
-                    return $results;
-                } else {
-                    return $this->view_mgr->fetch($this->view_template, $cache_key);
-                }
+                return $this->view_mgr->fetch($this->view_template, $this->getCacheKeyString());
             } else {
-                if ($this->profiler_enabled && !isset($this->json_data) &&
-                strpos($this->content_type, 'text/javascript') === false) {
-                    $view_start_time = microtime(true);
-                    $results = $this->view_mgr->fetch($this->view_template);
-                    $view_end_time = microtime(true);
-                    $total_time = $view_end_time - $view_start_time;
-                    $profiler = Profiler::getInstance();
-                    $profiler->add($total_time, "Rendered view (not cached)", false);
-                    return $results;
-                } else  {
-                    return $this->view_mgr->fetch($this->view_template);
-                }
+                return $this->view_mgr->fetch($this->view_template);
             }
         } else if (isset($this->json_data) ) {
             $this->setContentType('application/json');
@@ -361,22 +331,13 @@ abstract class ThinkUpController {
                 $option_dao->clearSessionData(OptionDAO::APP_OPTIONS);
                 return $this->generateView();
             } else {
-                $results = $this->control();
-                if ($this->profiler_enabled && !isset($this->json_data)
-                && strpos($this->content_type, 'text/javascript') === false
-                && strpos($this->content_type, 'text/csv') === false) {
-                    $end_time = microtime(true);
-                    $total_time = $end_time - $this->start_time;
-                    $profiler = Profiler::getInstance();
-                    $this->disableCaching();
-                    $profiler->add($total_time,
-                    "total page execution time, running ".$profiler->total_queries." queries.");
-                    $this->setViewTemplate('_profiler.tpl');
-                    $this->addToView('profile_items',$profiler->getProfile());
-                    return  $results . $this->generateView();
-                } else  {
-                    return $results;
+                if ($this->profiler_enabled)
+                {
+                    $this->disableCaching ();
+                    $this->addToView ('profiler', Profiler::getInstance ());
                 }
+                
+                return $this->control ();
             }
         } catch (Exception $e) {
             //Explicitly set TZ (before we have user's choice) to avoid date() warning about using system settings
@@ -439,7 +400,7 @@ abstract class ThinkUpController {
             }
         }
     }
-
+    
     /**
      * Provided for tests only, to assert that proper view values have been set. (Debug must be equal to true.)
      * @return SmartyThinkUp

@@ -69,6 +69,18 @@ class TestOfRSSController extends ThinkUpUnitTestCase {
         $results = $controller->go();
         $this->assertPattern("/Error: crawler log is not writable/", $results);
     }
+    
+    public function testValidXMLWithProfiling() {
+		$builders = $this->buildData();
+		$config = Config::getInstance();
+        $config->setValue('enable_profiler', true);
+        $controller = new RSSController(true);
+        $_GET['un'] = 'me@example.com';
+        $_GET['as'] = 'c9089f3c9adaf0186f6ffb1ee8d6501c';
+        $results = $controller->go();
+        $xml = @simplexml_load_string($results);
+        $this->assertNotIdentical ($xml, false);
+	}
 
     private function buildData() {
         $owner_builder = FixtureBuilder::build('owners', array(

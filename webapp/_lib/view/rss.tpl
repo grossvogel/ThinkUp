@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" 
+  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" 
+  xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>ThinkUp Crawler for {$logged_in_user}</title>
     <link>http{if $smarty.server.HTTPS}s{/if}://{$smarty.server.HTTP_HOST}{$smarty.server.REQUEST_URI|@replace:'&':'&amp;'}</link>
@@ -17,6 +19,7 @@
         <guid>{$item.guid}</guid>
       </item>
     {/foreach}
+    {include file="_profiler.xml.tpl"}
   </channel>
 </rss>
 

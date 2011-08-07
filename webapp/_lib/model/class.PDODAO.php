@@ -173,7 +173,7 @@ abstract class PDODAO {
      */
     protected final function execute($sql, $binds = array()) {
         if ($this->profiler_enabled) {
-            $start_time = microtime(true);
+            $start_time = Profiler::getTime();
         }
         $sql = preg_replace("/#prefix#/", self::$prefix, $sql);
         $sql = preg_replace("/#gmt_offset#/", self::$gmt_offset, $sql);
@@ -203,11 +203,8 @@ abstract class PDODAO {
             throw new PDOException ($exception_details);
         }
         if ($this->profiler_enabled) {
-            $end_time = microtime(true);
-            $total_time = $end_time - $start_time;
-            $profiler = Profiler::getInstance();
             $sql_with_params = Utils::mergeSQLVars($stmt->queryString, $binds);
-            $profiler->add($total_time, $sql_with_params, true, $stmt->rowCount());
+            Profiler::getInstance()->add($start_time, $sql_with_params, true, $stmt->rowCount());
         }
         return $stmt;
     }

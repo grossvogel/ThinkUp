@@ -54,14 +54,16 @@ class TestOfProfiler extends ThinkUpBasicUnitTestCase {
     }
 
     public function testAdd() {
+		$start_time = Profiler::getTime ();
+		sleep (1);
         $profiler = Profiler::getInstance();
-        $profiler->add(0.02503434, 'My 1st action');
-        $profiler->add(0.02303434, 'My 2nd action');
-        $profiler->add(0.12003434, 'My 3rd action');
-        $profiler->add(0.62003434, 'My 4th action', true, 10);
-        $profiler->add(0.40003434, 'My 5th action', true);
+        $profiler->add($start_time, 'My 1st action');
+        $profiler->add($start_time, 'My 2nd action');
+        $profiler->add($start_time, 'My 3rd action');
+        $profiler->add($start_time, 'My 4th action', true, 10);
+        $profiler->add($start_time, 'My 5th action', true);
         $actions = $profiler->getProfile();
-        $this->assertEqual($actions[0]['time'], '0.620');
+        $this->assertTrue($actions[0]['time'] > 1.0);
         $this->assertEqual($actions[0]['action'], 'My 4th action');
         $this->assertEqual($actions[0]['num_rows'], 10);
         $this->assertEqual($profiler->total_queries, 2);
